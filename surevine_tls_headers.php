@@ -11,8 +11,7 @@
 
 function surevine_tls_headers_insert()
 {
-if ( headers_sent() )
-{
+if ( headers_sent() ) {
  error_log("Headers already sent HTTP Headers modules unable to function");
 }
 
@@ -20,24 +19,23 @@ if ( headers_sent() )
  $time = esc_attr( get_option( 'surevine_tls_headers_hsts_time' ) );
  $subdomain = esc_attr( get_option( 'surevine_tls_headers_hsts_subdomains' ) );
  if ( ctype_digit($time)  ) {
-	if ( $subdomain > 0 ) {
-		 header("Strict-Transport-Security: max-age=$time ; includeSubDomains");
-	} else {
-		 header("Strict-Transport-Security: max-age=$time");
- 	}
+    if ($subdomain > 0) {
+         header("Strict-Transport-Security: max-age=$time ; includeSubDomains");
+    } else {
+         header("Strict-Transport-Security: max-age=$time");
+    }
  }
 
  # No Sniff
  $nosniff = esc_attr( get_option( 'surevine_tls_headers_nosniff' ) );
- if ( $nosniff == 1 ) {  send_nosniff_header(); }
- 
- # XSS 
+ if ($nosniff == 1) {  send_nosniff_header(); }
+
+ # XSS
  $xss = esc_attr( get_option( 'surevine_tls_headers_xss' ) );
- if ( $xss == 1 ) {  header("X-XSS-Protection: 1; mode=block;"); }
+ if ($xss == 1) {  header("X-XSS-Protection: 1; mode=block;"); }
 
 }
 add_action( 'send_headers', 'surevine_tls_headers_insert');
-
 
 function surevine_tls_headers_activate()
 {
@@ -48,7 +46,7 @@ function surevine_tls_headers_activate()
 
 }
 
-register_activation_hook( __FILE__, 'surevine_tls_headers_activate' ); 
+register_activation_hook( __FILE__, 'surevine_tls_headers_activate' );
 
 function surevine_tls_headers_deactivate()
 {
@@ -61,7 +59,7 @@ function surevine_tls_headers_deactivate()
  unregister_setting('surevine_tls_group', 'surevine_tls_headers_xss', 'ischecked' );
 
 }
-register_deactivation_hook( __FILE__, 'surevine_tls_headers_deactivate' ); 
+register_deactivation_hook( __FILE__, 'surevine_tls_headers_deactivate' );
 
 function surevine_tls_headers_display_form()
 {
@@ -95,52 +93,51 @@ function section_HSTS_callback()
  echo '<p>Include subdomains means all subdomains will use HTTPS.<br> Beware if serving "example.com" from server usually known as "www.example.com" this would mean any subdomain of "example.com" to someone visiting via that name if the certificate covers it. </p>';
 }
 
-function field_HSTS_time_callback() 
+function field_HSTS_time_callback()
 {
     $setting = esc_attr( get_option( 'surevine_tls_headers_hsts_time' ) );
     echo "<input type='text' name='surevine_tls_headers_hsts_time' value='$setting' />";
-}	
+}
 
-function field_HSTS_subdomain_callback() 
+function field_HSTS_subdomain_callback()
 {
     $setting = esc_attr( get_option( 'surevine_tls_headers_hsts_subdomains' ) );
     echo "<input type='checkbox' name='surevine_tls_headers_hsts_subdomains' value='1' ";
     checked($setting,"1");
     echo " />";
-}	
+}
 
-function field_HSTS_nosniff_callback() 
+function field_HSTS_nosniff_callback()
 {
     $setting = esc_attr( get_option( 'surevine_tls_headers_nosniff' ) );
     echo "<input type='checkbox' name='surevine_tls_headers_nosniff' value='1' ";
     checked($setting,"1");
     echo " />";
-}	
+}
 
-function field_HSTS_xss_callback() 
+function field_HSTS_xss_callback()
 {
     $setting = esc_attr( get_option( 'surevine_tls_headers_xss' ) );
     echo "<input type='checkbox' name='surevine_tls_headers_xss' value='1' ";
     checked($setting,"1");
     echo " />";
-}	
+}
 
 function ischecked($input)
 {
  $result = "0";
- if ( "1" === $input ) { $result = "1" ; }
+ if ("1" === $input) { $result = "1" ; }
+
  return $result;
 }
 
 function istime($input)
 {
-	# Two results either empty string - no header - or natural number (header) as "0" means remove HSTS from this domain
-	$result = "";
-	if ( ctype_digit($input) ) { $result = $input ; }
-	return $result;
+    # Two results either empty string - no header - or natural number (header) as "0" means remove HSTS from this domain
+    $result = "";
+    if ( ctype_digit($input) ) { $result = $input ; }
+
+    return $result;
 }
 
 /* Validation needs to ensure WP_SITEURL starts "https" */
-
-
-?>
