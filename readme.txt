@@ -38,11 +38,15 @@ XSS protection re-enabled XSS protection if the user has disabled it for the sit
 
 == Changelog ==
 
+= 0.2 =
+
+Added Sonarqube file and formatting changes
+
 = 0.1 =
 * Initial release.
 
 == Upgrade Notice ==
 
-= 0.1 =
-* Initial release.
+= 0.2 =
+* Code quality work
 
