@@ -1,4 +1,4 @@
-=== Surevine TLS Headers ===
+=== Security Headers ===
 Contributors: Simon Waters
 Tags: TLS,HTTPS,HSTS,nosniff
 Requires at least: 3.8.1
@@ -33,10 +33,14 @@ Disabling content sniffing is mostly of interest for sites that allow users to u
 XSS protection re-enabled XSS protection if the user has disabled it for the site.
 
 == Installation ==
-1. Upload \"surevine_tls_headers.php\" to the \"/wp-content/plugins/\" directory.
+1. Upload \"security_headers.php\" to the \"/wp-content/plugins/\" directory.
 1. Activate the plugin through the \"Plugins\" menu in WordPress.
 
 == Changelog ==
+
+= 0.3 =
+
+Prepare for release
 
 = 0.2 =
 
