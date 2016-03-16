@@ -38,6 +38,10 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 
 == Changelog ==
 
+= 0.5 -
+
+Implemented HPKP.
+
 = 0.4 =
 
 License change

@@ -3,7 +3,7 @@
  * Plugin Name: HTTP Headers
  * Plugin URI: http://surevine.com/
  * Description: Sets security related headers (HSTS etc)
- * Version: 0.4
+ * Version: 0.5
  * Author: Simon Waters (Surevine Ltd)
  * Author URI: http://waters.me/
  * License: GPL2 or any later version
@@ -37,6 +37,22 @@ function security_headers_insert() {
         header("X-XSS-Protection: 1; mode=block;");
     }
 
+    // HPKP
+    $pinkey1 = esc_attr(get_option('security_headers_hpkp_key1'));
+    $pinkey2 = esc_attr(get_option('security_headers_hpkp_key2'));
+    $pinkey3 = esc_attr(get_option('security_headers_hpkp_key3'));
+    $pintime = esc_attr(get_option('security_headers_hpkp_time'));
+    $pinsubdomain = esc_attr(get_option('security_headers_hpkp_subdomains'));
+    if ($pinkey1 !== '') {
+        $pinheader="Public-Key-Pins: ";
+        $pinheader .= 'pin-sha256="'. $pinkey1 .'";';
+        if ($pinkey2 !== '') { $pinheader .= 'pin-sha256="'. $pinkey2 .'";'; }
+        if ($pinkey3 !== '') { $pinheader .= 'pin-sha256="'. $pinkey3 .'";'; }
+	$pinheader .= " max-age=$pintime;";
+        if ($pinsubdomain > 0) { $pinheader .= ' includeSubDomains;'; } 
+        header($pinheader);
+    }
+
 }
 add_action('send_headers', 'security_headers_insert');
 
@@ -45,6 +61,11 @@ function security_headers_activate() {
     register_setting('security_group', 'security_headers_hsts_subdomains', 'ischecked');
     register_setting('security_group', 'security_headers_nosniff', 'ischecked');
     register_setting('security_group', 'security_headers_xss', 'ischecked');
+    register_setting('security_group', 'security_headers_hpkp_key1', 'iskey');
+    register_setting('security_group', 'security_headers_hpkp_key2', 'iskey');
+    register_setting('security_group', 'security_headers_hpkp_key3', 'iskey');
+    register_setting('security_group', 'security_headers_hpkp_time', 'istime');
+    register_setting('security_group', 'security_headers_hpkp_subdomains', 'ischecked');
 }
 
 register_activation_hook(__FILE__, 'security_headers_activate');
@@ -57,6 +78,11 @@ function security_headers_deactivate() {
     unregister_setting('security_group', 'security_headers_hsts_subdomains', 'ischecked');
     unregister_setting('security_group', 'security_headers_nosniff', 'ischecked');
     unregister_setting('security_group', 'security_headers_xss', 'ischecked');
+    unregister_setting('security_group', 'security_headers_hpkp_key1', 'iskey');
+    unregister_setting('security_group', 'security_headers_hpkp_key2', 'iskey');
+    unregister_setting('security_group', 'security_headers_hpkp_key3', 'iskey');
+    unregister_setting('security_group', 'security_headers_hpkp_time', 'istime');
+    unregister_setting('security_group', 'security_headers_hpkp_subdomains', 'ischecked');
 
 }
 register_deactivation_hook(__FILE__, 'security_headers_deactivate');
@@ -79,6 +105,12 @@ function security_headers_settings() {
     add_settings_field( 'field_HSTS_subdomain', 'HSTS to include subdomains', 'field_HSTS_subdomain_callback', 'security_headers', 'section_HSTS');
     add_settings_field( 'field_HSTS_nosniff', 'Disable content sniffing', 'field_HSTS_nosniff_callback', 'security_headers', 'section_HSTS');
     add_settings_field( 'field_HSTS_xss', 'Enable Chrome XSS protection', 'field_HSTS_xss_callback', 'security_headers', 'section_HSTS');
+    add_settings_section('section_HPKP', 'HTTP Security Related Headers', 'section_HPKP_callback', 'security_headers');
+    add_settings_field( 'field_HPKP_time', 'HPKP Time to live (seconds)', 'field_HPKP_time_callback', 'security_headers', 'section_HPKP');
+    add_settings_field( 'field_HPKP_subdomain', 'HPKP to include subdomains', 'field_HPKP_subdomain_callback', 'security_headers', 'section_HPKP');
+    add_settings_field( 'field_HPKP_key1', 'HPKP key', 'field_HPKP_key1_callback', 'security_headers', 'section_HPKP');
+    add_settings_field( 'field_HPKP_key2', 'HPKP key', 'field_HPKP_key2_callback', 'security_headers', 'section_HPKP');
+    add_settings_field( 'field_HPKP_key3', 'HPKP key', 'field_HPKP_key3_callback', 'security_headers', 'section_HPKP');
 }
 add_action('admin_init', 'security_headers_activate');
 add_action('admin_menu', 'security_headers_settings');
@@ -116,6 +148,41 @@ function field_HSTS_xss_callback() {
     echo " />";
 }
 
+function section_HPKP_callback() {
+    echo '<p>Only enable HPKP when you have a working site over HTTPS with no errors.</p>';
+    echo '<p>You should supply the SHA256 of the current servers public key.</p>';
+    echo '<p>You must have two backup keys with SHA256 specified, these should be kept off server in a safe place.</p>';
+    echo '<p>Always include the subdomains to ensure they can\'t be used to extract cookies or other sensitive data.</p>';
+}
+
+
+function field_HPKP_time_callback() {
+    $setting = esc_attr(get_option('security_headers_hpkp_time'));
+    echo "<input type='text' name='security_headers_hpkp_time' value='$setting' />";
+}
+
+function field_HPKP_subdomain_callback() {
+    $setting = esc_attr(get_option('security_headers_hpkp_subdomains'));
+    echo "<input type='checkbox' name='security_headers_hpkp_subdomains' value='1' ";
+    checked($setting, "1");
+    echo " />";
+}
+
+function field_HPKP_key1_callback() {
+    $setting = esc_attr(get_option('security_headers_hpkp_key1'));
+    echo "<input type='text' name='security_headers_hpkp_key1' value='$setting' />";
+}
+
+function field_HPKP_key2_callback() {
+    $setting = esc_attr(get_option('security_headers_hpkp_key2'));
+    echo "<input type='text' name='security_headers_hpkp_key2' value='$setting' />";
+}
+
+function field_HPKP_key3_callback() {
+    $setting = esc_attr(get_option('security_headers_hpkp_key3'));
+    echo "<input type='text' name='security_headers_hpkp_key3' value='$setting' />";
+}
+
 function ischecked($input) {
     $result = "0";
     if ("1" === $input) {
@@ -126,7 +193,7 @@ function ischecked($input) {
 }
 
 function istime($input) {
-    // Two results either empty string - no header - or natural number (header) as "0" means remove HSTS from this domain
+    // Two results either empty string - no header - or natural number (header) as "0" means remove HSTS/HPKP from this domain
     $result = "";
     if (ctype_digit($input)) {
         $result = $input ;
@@ -135,4 +202,10 @@ function istime($input) {
     return $result;
 }
 
-/* Validation needs to ensure WP_SITEURL starts "https" */
+function iskey($input) {
+    $result="";
+    if (preg_match("/^[a-zA-Z0-9+\/]{43}=$/", $input)){ // base 64 of 256 bit with equal sign added
+     $result=$input;
+    }
+    return $result ;
+}
