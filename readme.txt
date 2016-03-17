@@ -2,7 +2,7 @@
 Contributors: Simon Waters
 Tags: TLS,HTTPS,HSTS,nosniff
 Requires at least: 3.8.1
-Tested up to: 4.2
+Tested up to: 4.4
 Stable tag: trunk
 License: GPLv2 or any later version
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
@@ -38,9 +38,13 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 
 == Changelog ==
 
-= 0.5 -
+= 0.6 =
 
 Implemented HPKP.
+
+= 0.5 =
+
+Change h2 for h1 for accessibility per #31650
 
 = 0.4 =
 

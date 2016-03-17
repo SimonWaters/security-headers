@@ -89,7 +89,7 @@ register_deactivation_hook(__FILE__, 'security_headers_deactivate');
 
 function security_headers_display_form() {
     echo '<div class="wrap">';
-    echo '<h2>Options for HTTP Headers</h2>';
+    echo '<h1>Options for HTTP Headers</h1>';
     echo '<form action="options.php" method="POST">';
     settings_fields('security_group');
     do_settings_sections('security_headers');
