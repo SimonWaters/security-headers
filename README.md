@@ -1,5 +1,5 @@
-surevine_tls_headers
-====================
+security_headers
+================
 
 Wordpress plug-in to set HSTS, HPKP and other security headers in a Wordpress site.
 
