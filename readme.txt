@@ -36,8 +36,8 @@ Disabling content sniffing is mostly of interest for sites that allow users to u
 XSS protection re-enabled XSS protection for the site, if the user has disabled it previously, and sets the "block" option so that attacks are not silently ignored.
 
 == Installation ==
-1. Upload \"security_headers.php\" to the \"/wp-content/plugins/\" directory.
-2. Activate the plugin through the \"Plugins\" menu in WordPress.
+1. Upload "security_headers.php" to the "/wp-content/plugins/" directory.
+2. Activate the plugin through the "Plugins" menu in WordPress.
 
 == Changelog ==
 
