@@ -16,7 +16,7 @@ may be on shared IP addresses, or otherwise restricted. For these
 servers it is handy to be able to set desired headers without access to
 the web servers configuration or using .htaccess file.
 
-Wordpress has set the X-Frame-Option header for login since version 3.2.
+Wordpress has set the X-Frame-Option header since version 3.2.
 
 This plug-in exposes controls for:
 
