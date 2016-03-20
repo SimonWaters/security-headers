@@ -15,14 +15,16 @@ function security_headers_insert() {
     }
 
     // HSTS
-    $time = esc_attr(get_option('security_headers_hsts_time'));
-    $subdomain = esc_attr(get_option('security_headers_hsts_subdomains'));
-    if ( ctype_digit($time)  ) {
+    if (is_ssl()){
+      $time = esc_attr(get_option('security_headers_hsts_time'));
+      $subdomain = esc_attr(get_option('security_headers_hsts_subdomains'));
+      if ( ctype_digit($time)  ) {
         if ($subdomain > 0) {
             header("Strict-Transport-Security: max-age=$time ; includeSubDomains");
         } else {
             header("Strict-Transport-Security: max-age=$time");
         }
+      }
     }
 
     // No Sniff
@@ -38,19 +40,22 @@ function security_headers_insert() {
     }
 
     // HPKP
-    $pinkey1 = esc_attr(get_option('security_headers_hpkp_key1'));
-    $pinkey2 = esc_attr(get_option('security_headers_hpkp_key2'));
-    $pinkey3 = esc_attr(get_option('security_headers_hpkp_key3'));
-    $pintime = esc_attr(get_option('security_headers_hpkp_time'));
-    $pinsubdomain = esc_attr(get_option('security_headers_hpkp_subdomains'));
-    if ($pinkey1 !== '') {
+    if (is_ssl()){
+      $pinkey1 = esc_attr(get_option('security_headers_hpkp_key1'));
+      $pinkey2 = esc_attr(get_option('security_headers_hpkp_key2'));
+      $pinkey3 = esc_attr(get_option('security_headers_hpkp_key3'));
+      $pintime = esc_attr(get_option('security_headers_hpkp_time'));
+      $pinsubdomain = esc_attr(get_option('security_headers_hpkp_subdomains'));
+      // Standard requires at least one backup key so insist on two keys before working
+      if (!empty($pinkey1) && !empty($pinkey2)) {
         $pinheader="Public-Key-Pins: ";
         $pinheader .= 'pin-sha256="'. $pinkey1 .'";';
-        if ($pinkey2 !== '') { $pinheader .= 'pin-sha256="'. $pinkey2 .'";'; }
-        if ($pinkey3 !== '') { $pinheader .= 'pin-sha256="'. $pinkey3 .'";'; }
+        $pinheader .= 'pin-sha256="'. $pinkey2 .'";';
+        if (!empty($pinkey3)) { $pinheader .= 'pin-sha256="'. $pinkey3 .'";'; }
 	$pinheader .= " max-age=$pintime;";
         if ($pinsubdomain > 0) { $pinheader .= ' includeSubDomains;'; } 
         header($pinheader);
+      }
     }
 
 }
@@ -100,20 +105,27 @@ function security_headers_display_form() {
 
 function security_headers_settings() {
     add_options_page('HTTP Headers', 'HTTP Headers', 'manage_options', 'security_headers', 'security_headers_display_form');
-    add_settings_section('section_HSTS', 'HTTP Security Related Headers', 'section_HSTS_callback', 'security_headers');
+    add_settings_section('section_HEAD', 'General Security Headers', 'section_HEAD_callback', 'security_headers');
+    add_settings_field( 'field_HSTS_nosniff', 'Disable content sniffing', 'field_HSTS_nosniff_callback', 'security_headers', 'section_HEAD');
+    add_settings_field( 'field_HSTS_xss', 'Enable Chrome XSS protection', 'field_HSTS_xss_callback', 'security_headers', 'section_HEAD');
+    add_settings_section('section_HSTS', 'HTTPS Strict Transport Security', 'section_HSTS_callback', 'security_headers');
     add_settings_field( 'field_HSTS_time', 'HSTS Time to live (seconds)', 'field_HSTS_time_callback', 'security_headers', 'section_HSTS');
     add_settings_field( 'field_HSTS_subdomain', 'HSTS to include subdomains', 'field_HSTS_subdomain_callback', 'security_headers', 'section_HSTS');
-    add_settings_field( 'field_HSTS_nosniff', 'Disable content sniffing', 'field_HSTS_nosniff_callback', 'security_headers', 'section_HSTS');
-    add_settings_field( 'field_HSTS_xss', 'Enable Chrome XSS protection', 'field_HSTS_xss_callback', 'security_headers', 'section_HSTS');
-    add_settings_section('section_HPKP', 'HTTP Security Related Headers', 'section_HPKP_callback', 'security_headers');
+    add_settings_section('section_HPKP', 'HTTP Public Key Pinning', 'section_HPKP_callback', 'security_headers');
     add_settings_field( 'field_HPKP_time', 'HPKP Time to live (seconds)', 'field_HPKP_time_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_subdomain', 'HPKP to include subdomains', 'field_HPKP_subdomain_callback', 'security_headers', 'section_HPKP');
-    add_settings_field( 'field_HPKP_key1', 'HPKP key', 'field_HPKP_key1_callback', 'security_headers', 'section_HPKP');
-    add_settings_field( 'field_HPKP_key2', 'HPKP key', 'field_HPKP_key2_callback', 'security_headers', 'section_HPKP');
-    add_settings_field( 'field_HPKP_key3', 'HPKP key', 'field_HPKP_key3_callback', 'security_headers', 'section_HPKP');
+    add_settings_field( 'field_HPKP_key1', 'HPKP first key', 'field_HPKP_key1_callback', 'security_headers', 'section_HPKP');
+    add_settings_field( 'field_HPKP_key2', 'HPKP backup key', 'field_HPKP_key2_callback', 'security_headers', 'section_HPKP');
+    add_settings_field( 'field_HPKP_key3', 'HPKP optional backup key', 'field_HPKP_key3_callback', 'security_headers', 'section_HPKP');
 }
 add_action('admin_init', 'security_headers_activate');
 add_action('admin_menu', 'security_headers_settings');
+
+function section_HEAD_callback() {
+    echo '<p>Security headers unrelated to HSTS or HPKP.</p>';
+    echo '<p>Always disable <a href="https://blogs.msdn.microsoft.com/ie/2008/09/02/ie8-security-part-vi-beta-2-update/">Content sniffing</a>.</p>';
+    echo '<p>XSS protection is enabled by default in IE and Chrome, but they try to clean up XSS requests; this setting ensures this behaviour is on in the browser even if the user disabled it, and that requests that trigger the warning are blocked and shown to the user, rather than silently mangled.</p>';
+}
 
 function section_HSTS_callback() {
     echo '<p>Only enable HSTS when you have a working site over HTTPS with no errors, with redirects from http to https.</p>';
@@ -149,10 +161,8 @@ function field_HSTS_xss_callback() {
 }
 
 function section_HPKP_callback() {
-    echo '<p>Only enable HPKP when you have a working site over HTTPS with no errors.</p>';
-    echo '<p>You should supply the SHA256 of the current servers public key.</p>';
-    echo '<p>You must have two backup keys with SHA256 specified, these should be kept off server in a safe place.</p>';
-    echo '<p>Always include the subdomains to ensure they can\'t be used to extract cookies or other sensitive data.</p>';
+    echo '<p>Include the subdomains to ensure they can\'t be used to extract cookies or other sensitive data.</p>';
+    echo 'Keys are base64 encoded SHA256 of the public key see <a href="https://waters.me/wordpress/hpkp-pinning-policy/">HPKP Pinning policy</a> for details and a command reference.</p>';
 }
 
 

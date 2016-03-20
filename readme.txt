@@ -40,7 +40,9 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 
 = 0.6 =
 
-Implemented HPKP.
+HPKP support
+
+Check for TLS before emitting TLS headers
 
 = 0.5 =
 
