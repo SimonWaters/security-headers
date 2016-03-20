@@ -37,7 +37,7 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 
 == Installation ==
 1. Upload \"security_headers.php\" to the \"/wp-content/plugins/\" directory.
-1. Activate the plugin through the \"Plugins\" menu in WordPress.
+2. Activate the plugin through the \"Plugins\" menu in WordPress.
 
 == Changelog ==
 
