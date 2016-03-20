@@ -22,15 +22,18 @@ This plug-in exposes controls for:
 
 
 * HSTS (Strict-Transport-Security)
+* HPKP (Public-Key-Pins)
 * Disabling content sniffing (X-Content-Type-Options)
 * XSS protection (X-XSS-Protection)
 
 HSTS is used to ensure that futue connections to a website always use TLS,
 and disallowing bypass of certificate warnings for the site.
 
+HPKP is used if you don't want to rely solely on the Certificate Authority trust model for certificate issuance.§
+
 Disabling content sniffing is mostly of interest for sites that allow users to upload files of specific types, but that browsers might be silly enough to interpret of some other type, thus allowing unexpected attacks.
 
-XSS protection re-enabled XSS protection for the site, if the user has disabled it previously.
+XSS protection re-enabled XSS protection for the site, if the user has disabled it previously, and sets the "block" option so that attacks are not silently ignored.
 
 == Installation ==
 1. Upload \"security_headers.php\" to the \"/wp-content/plugins/\" directory.
@@ -42,7 +45,7 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 
 HPKP support
 
-Check for TLS before emitting TLS headers
+Check for TLS before emitting HSTS or HPKP headers
 
 = 0.5 =
 
