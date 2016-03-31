@@ -2,7 +2,7 @@
 Contributors: Simon Waters
 Tags: TLS,HTTPS,HSTS,nosniff
 Requires at least: 3.8.1
-Tested up to: 4.4
+Tested up to: 4.5
 Stable tag: trunk
 License: GPLv2 or any later version
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
