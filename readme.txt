@@ -41,6 +41,12 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 
 == Changelog ==
 
+= 0.7 =
+
+Add report-uri 
+
+Fix handling of non-numeric blank strings for HPKP max-age
+
 = 0.6 =
 
 HPKP support

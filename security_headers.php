@@ -3,7 +3,7 @@
  * Plugin Name: HTTP Headers
  * Plugin URI: http://surevine.com/
  * Description: Sets security related headers (HSTS etc)
- * Version: 0.6
+ * Version: 0.7
  * Author: Simon Waters (Surevine Ltd)
  * Author URI: http://waters.me/
  * License: GPL2 or any later version
@@ -46,14 +46,16 @@ function security_headers_insert() {
       $pinkey3 = esc_attr(get_option('security_headers_hpkp_key3'));
       $pintime = esc_attr(get_option('security_headers_hpkp_time'));
       $pinsubdomain = esc_attr(get_option('security_headers_hpkp_subdomains'));
+      $pinuri = get_option('security_headers_hpkp_uri');
       // Standard requires at least one backup key so insist on two keys before working
-      if (!empty($pinkey1) && !empty($pinkey2)) {
+      if ( is_numeric($pintime) && !empty($pinkey1) && !empty($pinkey2)) {
         $pinheader="Public-Key-Pins: ";
         $pinheader .= 'pin-sha256="'. $pinkey1 .'";';
         $pinheader .= 'pin-sha256="'. $pinkey2 .'";';
         if (!empty($pinkey3)) { $pinheader .= 'pin-sha256="'. $pinkey3 .'";'; }
 	$pinheader .= " max-age=$pintime;";
         if ($pinsubdomain > 0) { $pinheader .= ' includeSubDomains;'; } 
+        if (!empty($pinuri)) { $pinheader .= ' report-uri="'. $pinuri .'";'; }
         header($pinheader);
       }
     }
@@ -71,6 +73,7 @@ function security_headers_activate() {
     register_setting('security_group', 'security_headers_hpkp_key3', 'iskey');
     register_setting('security_group', 'security_headers_hpkp_time', 'istime');
     register_setting('security_group', 'security_headers_hpkp_subdomains', 'ischecked');
+    register_setting('security_group', 'security_headers_hpkp_uri', 'isuri');
 }
 
 register_activation_hook(__FILE__, 'security_headers_activate');
@@ -88,6 +91,7 @@ function security_headers_deactivate() {
     unregister_setting('security_group', 'security_headers_hpkp_key3', 'iskey');
     unregister_setting('security_group', 'security_headers_hpkp_time', 'istime');
     unregister_setting('security_group', 'security_headers_hpkp_subdomains', 'ischecked');
+    unregister_setting('security_group', 'security_headers_hpkp_uri', 'isuri');
 
 }
 register_deactivation_hook(__FILE__, 'security_headers_deactivate');
@@ -117,6 +121,7 @@ function security_headers_settings() {
     add_settings_field( 'field_HPKP_key1', 'HPKP first key', 'field_HPKP_key1_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_key2', 'HPKP backup key', 'field_HPKP_key2_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_key3', 'HPKP optional backup key', 'field_HPKP_key3_callback', 'security_headers', 'section_HPKP');
+    add_settings_field( 'field_HPKP_uri', 'HPKP Reporting URI', 'field_HPKP_uri_callback', 'security_headers', 'section_HPKP');
 }
 add_action('admin_init', 'security_headers_activate');
 add_action('admin_menu', 'security_headers_settings');
@@ -193,6 +198,11 @@ function field_HPKP_key3_callback() {
     echo "<input type='text' name='security_headers_hpkp_key3' value='$setting' />";
 }
 
+function field_HPKP_uri_callback() {
+    $setting = esc_attr(get_option('security_headers_hpkp_uri'));
+    echo "<input type='text' name='security_headers_hpkp_uri' value='$setting' />";
+}
+
 function ischecked($input) {
     $result = "0";
     if ("1" === $input) {
@@ -215,6 +225,14 @@ function istime($input) {
 function iskey($input) {
     $result="";
     if (preg_match("/^[a-zA-Z0-9+\/]{43}=$/", $input)){ // base 64 of 256 bit with equal sign added
+     $result=$input;
+    }
+    return $result ;
+}
+
+function isuri($input) {
+    $result="";
+    if (preg_match('%^(?:(?:https?|ftp)://)(?:\S+(?::\S*)?@|\d{1,3}(?:\.\d{1,3}){3}|(?:(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)(?:\.(?:[a-z\d\x{00a1}-\x{ffff}]+-?)*[a-z\d\x{00a1}-\x{ffff}]+)*(?:\.[a-z\x{00a1}-\x{ffff}]{2,6}))(?::\d+)?(?:[^\s]*)?$%iu', $input)){ // https://mathiasbynens.be/demo/url-regex diegoperini 
      $result=$input;
     }
     return $result ;
