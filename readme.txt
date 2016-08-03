@@ -41,6 +41,10 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 
 == Changelog ==
 
+= 0.8 =
+
+Add headers to admin section of WordPress
+
 = 0.7 =
 
 Add report-uri 
