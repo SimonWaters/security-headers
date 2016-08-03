@@ -16,24 +16,24 @@ may be on shared IP addresses, or otherwise restricted. For these
 servers it is handy to be able to set desired headers without access to
 the web servers configuration or using .htaccess file.
 
-Wordpress has set the X-Frame-Option header since version 3.2.
-
 This plug-in exposes controls for:
-
 
 * HSTS (Strict-Transport-Security)
 * HPKP (Public-Key-Pins)
 * Disabling content sniffing (X-Content-Type-Options)
 * XSS protection (X-XSS-Protection)
+* Clickjacking mitigation (X-Frame-Options in main site)
 
-HSTS is used to ensure that futue connections to a website always use TLS,
+HSTS is used to ensure that future connections to a website always use TLS,
 and disallowing bypass of certificate warnings for the site.
 
-HPKP is used if you don't want to rely solely on the Certificate Authority trust model for certificate issuance.§
+HPKP is used if you don't want to rely solely on the Certificate Authority trust model for certificate issuance.
 
 Disabling content sniffing is mostly of interest for sites that allow users to upload files of specific types, but that browsers might be silly enough to interpret of some other type, thus allowing unexpected attacks.
 
 XSS protection re-enabled XSS protection for the site, if the user has disabled it previously, and sets the "block" option so that attacks are not silently ignored.
+
+Clickjacking protection is usually only relevant when someone is logged in but users requested it, presumably they have rich content outside of WordPress authentication they wish to protect.
 
 == Installation ==
 1. Upload "security_headers.php" to the "/wp-content/plugins/" directory.
@@ -44,7 +44,9 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 = 0.8 =
 
 Add headers to admin section of WordPress
+
 Added option to set the X-Frame-Options headers to main site
+
 Added HSTS Preload header (thanks to Jamie)
 
 = 0.7 =
