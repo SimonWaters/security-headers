@@ -39,6 +39,12 @@ function security_headers_insert() {
         header("X-XSS-Protection: 1; mode=block;");
     }
 
+    // Frame Options
+    $frame = esc_attr(get_option('security_headers_frame'));
+    if ($frame == 1) {
+        send_frame_options_header();
+    }
+
     // HPKP
     if (is_ssl()){
       $pinkey1 = esc_attr(get_option('security_headers_hpkp_key1'));
@@ -71,6 +77,7 @@ function security_headers_activate() {
     register_setting('security_group', 'security_headers_hsts_subdomains', 'ischecked');
     register_setting('security_group', 'security_headers_nosniff', 'ischecked');
     register_setting('security_group', 'security_headers_xss', 'ischecked');
+    register_setting('security_group', 'security_headers_frame', 'ischecked');
     register_setting('security_group', 'security_headers_hpkp_key1', 'iskey');
     register_setting('security_group', 'security_headers_hpkp_key2', 'iskey');
     register_setting('security_group', 'security_headers_hpkp_key3', 'iskey');
@@ -90,6 +97,7 @@ function security_headers_deactivate() {
     unregister_setting('security_group', 'security_headers_hsts_subdomains', 'ischecked');
     unregister_setting('security_group', 'security_headers_nosniff', 'ischecked');
     unregister_setting('security_group', 'security_headers_xss', 'ischecked');
+    unregister_setting('security_group', 'security_headers_frame', 'ischecked');
     unregister_setting('security_group', 'security_headers_hpkp_key1', 'iskey');
     unregister_setting('security_group', 'security_headers_hpkp_key2', 'iskey');
     unregister_setting('security_group', 'security_headers_hpkp_key3', 'iskey');
@@ -116,6 +124,7 @@ function security_headers_settings() {
     add_settings_section('section_HEAD', 'General Security Headers', 'section_HEAD_callback', 'security_headers');
     add_settings_field( 'field_HSTS_nosniff', 'Disable content sniffing', 'field_HSTS_nosniff_callback', 'security_headers', 'section_HEAD');
     add_settings_field( 'field_HSTS_xss', 'Enable Chrome XSS protection', 'field_HSTS_xss_callback', 'security_headers', 'section_HEAD');
+    add_settings_field( 'field_HSTS_frame', 'Restrict framing of main site', 'field_HSTS_frame_callback', 'security_headers', 'section_HEAD');
     add_settings_section('section_HSTS', 'HTTPS Strict Transport Security', 'section_HSTS_callback', 'security_headers');
     add_settings_field( 'field_HSTS_time', 'HSTS Time to live (seconds)', 'field_HSTS_time_callback', 'security_headers', 'section_HSTS');
     add_settings_field( 'field_HSTS_subdomain', 'HSTS to include subdomains', 'field_HSTS_subdomain_callback', 'security_headers', 'section_HSTS');
@@ -134,6 +143,7 @@ function section_HEAD_callback() {
     echo '<p>Security headers unrelated to HSTS or HPKP.</p>';
     echo '<p>Always disable <a href="https://blogs.msdn.microsoft.com/ie/2008/09/02/ie8-security-part-vi-beta-2-update/">Content sniffing</a>.</p>';
     echo '<p>XSS protection is enabled by default in IE and Chrome, but they try to clean up XSS requests; this setting ensures this behaviour is on in the browser even if the user disabled it, and that requests that trigger the warning are blocked and shown to the user, rather than silently mangled.</p>';
+    echo '<p>Restrict framing prevent clickjacking in the main site, WordPress already sets this restriction for the admin and login pages.</p>';
 }
 
 function section_HSTS_callback() {
@@ -165,6 +175,13 @@ function field_HSTS_nosniff_callback() {
 function field_HSTS_xss_callback() {
     $setting = esc_attr(get_option('security_headers_xss'));
     echo "<input type='checkbox' name='security_headers_xss' value='1' ";
+    checked($setting, "1");
+    echo " />";
+}
+
+function field_HSTS_frame_callback() {
+    $setting = esc_attr(get_option('security_headers_frame'));
+    echo "<input type='checkbox' name='security_headers_frame' value='1' ";
     checked($setting, "1");
     echo " />";
 }
