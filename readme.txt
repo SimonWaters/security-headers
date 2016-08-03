@@ -45,6 +45,7 @@ XSS protection re-enabled XSS protection for the site, if the user has disabled 
 
 Add headers to admin section of WordPress
 Added option to set the X-Frame-Options headers to main site
+Added HSTS Preload header (thanks to Jamie)
 
 = 0.7 =
 

@@ -18,12 +18,11 @@ function security_headers_insert() {
     if (is_ssl()){
       $time = esc_attr(get_option('security_headers_hsts_time'));
       $subdomain = esc_attr(get_option('security_headers_hsts_subdomains'));
+      $preload = esc_attr(get_option('security_headers_hsts_preload'));
       if ( ctype_digit($time)  ) {
-        if ($subdomain > 0) {
-            header("Strict-Transport-Security: max-age=$time ; includeSubDomains");
-        } else {
-            header("Strict-Transport-Security: max-age=$time");
-        }
+	$subdomain_output = $subdomain > 0 ? "; includeSubDomains" : "";
+        $preload_output = $preload > 0 ? "; preload" : "";
+        header("Strict-Transport-Security: max-age=$time $subdomain_output $preload_output");
       }
     }
 
@@ -75,6 +74,7 @@ add_action('admin_init', 'security_headers_insert');
 function security_headers_activate() {
     register_setting('security_group', 'security_headers_hsts_time', 'istime');
     register_setting('security_group', 'security_headers_hsts_subdomains', 'ischecked');
+    register_setting('security_group', 'security_headers_hsts_preload', 'ischecked');
     register_setting('security_group', 'security_headers_nosniff', 'ischecked');
     register_setting('security_group', 'security_headers_xss', 'ischecked');
     register_setting('security_group', 'security_headers_frame', 'ischecked');
@@ -95,6 +95,7 @@ function security_headers_deactivate() {
 
     unregister_setting('security_group', 'security_headers_hsts_time', 'istime');
     unregister_setting('security_group', 'security_headers_hsts_subdomains', 'ischecked');
+    unregister_setting('security_group', 'security_headers_hsts_preload', 'ischecked');
     unregister_setting('security_group', 'security_headers_nosniff', 'ischecked');
     unregister_setting('security_group', 'security_headers_xss', 'ischecked');
     unregister_setting('security_group', 'security_headers_frame', 'ischecked');
@@ -128,6 +129,7 @@ function security_headers_settings() {
     add_settings_section('section_HSTS', 'HTTPS Strict Transport Security', 'section_HSTS_callback', 'security_headers');
     add_settings_field( 'field_HSTS_time', 'HSTS Time to live (seconds)', 'field_HSTS_time_callback', 'security_headers', 'section_HSTS');
     add_settings_field( 'field_HSTS_subdomain', 'HSTS to include subdomains', 'field_HSTS_subdomain_callback', 'security_headers', 'section_HSTS');
+    add_settings_field( 'field_HSTS_preload', 'HSTS include site in preload list', 'field_HSTS_preload_callback', 'security_headers', 'section_HSTS');
     add_settings_section('section_HPKP', 'HTTP Public Key Pinning', 'section_HPKP_callback', 'security_headers');
     add_settings_field( 'field_HPKP_time', 'HPKP Time to live (seconds)', 'field_HPKP_time_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_subdomain', 'HPKP to include subdomains', 'field_HPKP_subdomain_callback', 'security_headers', 'section_HPKP');
@@ -151,6 +153,7 @@ function section_HSTS_callback() {
     echo '<p>We recommend you enable it with a small time to live (say 300s) initially, and increase after testing the site.</p>';
     echo '<p>A blank field means no header, "0" means remove HSTS, and an integer is a time in seconds</p>';
     echo '<p>Include subdomains means all subdomains will use HTTPS.<br> Beware if serving "example.com" from server usually known as "www.example.com" this would mean any subdomain of "example.com" to someone visiting via that name if the certificate covers it. </p>';
+    echo '<p>Include site in preload list means browser authors may add it to their hardcoded list, tick when you are sure HSTS is right for youir site.</p>';
 }
 
 function field_HSTS_time_callback() {
@@ -161,6 +164,13 @@ function field_HSTS_time_callback() {
 function field_HSTS_subdomain_callback() {
     $setting = esc_attr(get_option('security_headers_hsts_subdomains'));
     echo "<input type='checkbox' name='security_headers_hsts_subdomains' value='1' ";
+    checked($setting, "1");
+    echo " />";
+}
+
+function field_HSTS_preload_callback() {
+    $setting = esc_attr(get_option('security_headers_hsts_preload'));
+    echo "<input type='checkbox' name='security_headers_hsts_preload' value='1' ";
     checked($setting, "1");
     echo " />";
 }
