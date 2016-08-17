@@ -1,6 +1,6 @@
 <?php
 /**
- * Plugin Name: HTTP Headers
+ * Plugin Name: Security Headers
  * Plugin URI: http://surevine.com/
  * Description: Sets security related headers (HSTS etc)
  * Version: 0.8
