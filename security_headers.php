@@ -22,7 +22,7 @@ function security_headers_insert() {
       if ( ctype_digit($time)  ) {
 	$subdomain_output = $subdomain > 0 ? "; includeSubDomains" : "";
         $preload_output = $preload > 0 ? "; preload" : "";
-        header("Strict-Transport-Security: max-age=$time $subdomain_output $preload_output");
+        header("Strict-Transport-Security: max-age=$time$subdomain_output$preload_output");
       }
     }
 
