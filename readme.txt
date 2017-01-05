@@ -41,6 +41,10 @@ Clickjacking protection is usually only relevant when someone is logged in but u
 
 == Changelog ==
 
+= 0.9 =
+
+Removed unnecessary whitespace in HSTS header
+
 = 0.8 =
 
 Add headers to admin section of WordPress
