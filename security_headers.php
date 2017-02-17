@@ -3,11 +3,22 @@
  * Plugin Name: HTTP Headers
  * Plugin URI: http://surevine.com/
  * Description: Sets security related headers (HSTS etc)
- * Version: 0.8
+ * Version: 0.9
  * Author: Simon Waters (Surevine Ltd)
  * Author URI: http://waters.me/
  * License: GPL2 or any later version
  */
+
+$referrer_policies=array(
+  "no-referrer"                     => "Omit entirely",
+  "no-referrer-when-downgrade"      => "(Browser default) omit referrer on downgrade to HTTP",
+  "origin"                          => "Only send the origin ( https://www.example.com/ )",
+  "origin-when-cross-origin"        => "Full URL to current origin, but just origin to other sites",
+  "same-origin"                     => "Omit referrer for cross origin requests",
+  "strict-origin"                   => "Send only the origin, or nothing on downgrade (HTTPS->HTTP)",
+  "strict-origin-when-cross-origin" => "Omit on downgrade, just origin on cross-origin, and full to current origin",
+  "unsafe-url"                      => "Always send the whole URL"
+);
 
 function security_headers_insert() {
     if ( headers_sent() ) {
@@ -20,7 +31,7 @@ function security_headers_insert() {
       $subdomain = esc_attr(get_option('security_headers_hsts_subdomains'));
       $preload = esc_attr(get_option('security_headers_hsts_preload'));
       if ( ctype_digit($time)  ) {
-	$subdomain_output = $subdomain > 0 ? "; includeSubDomains" : "";
+	    $subdomain_output = $subdomain > 0 ? "; includeSubDomains" : "";
         $preload_output = $preload > 0 ? "; preload" : "";
         header("Strict-Transport-Security: max-age=$time$subdomain_output$preload_output");
       }
@@ -58,12 +69,19 @@ function security_headers_insert() {
         $pinheader .= 'pin-sha256="'. $pinkey1 .'";';
         $pinheader .= 'pin-sha256="'. $pinkey2 .'";';
         if (!empty($pinkey3)) { $pinheader .= 'pin-sha256="'. $pinkey3 .'";'; }
-	$pinheader .= " max-age=$pintime;";
+	    $pinheader .= " max-age=$pintime;";
         if ($pinsubdomain > 0) { $pinheader .= ' includeSubDomains;'; } 
         if (!empty($pinuri)) { $pinheader .= ' report-uri="'. $pinuri .'";'; }
         header($pinheader);
       }
     }
+    
+    // Referrer Policy
+    $referrer = esc_attr(get_option('security_headers_referrer'));
+    if (!empty($referrer)){
+        header("Referrer-Policy: $referrer");
+    }
+    
 
 }
 add_action('send_headers', 'security_headers_insert');
@@ -84,6 +102,7 @@ function security_headers_activate() {
     register_setting('security_group', 'security_headers_hpkp_time', 'istime');
     register_setting('security_group', 'security_headers_hpkp_subdomains', 'ischecked');
     register_setting('security_group', 'security_headers_hpkp_uri', 'isuri');
+    register_setting('security_group', 'security_headers_referrer', 'isreferrer');
 }
 
 register_activation_hook(__FILE__, 'security_headers_activate');
@@ -105,6 +124,7 @@ function security_headers_deactivate() {
     unregister_setting('security_group', 'security_headers_hpkp_time', 'istime');
     unregister_setting('security_group', 'security_headers_hpkp_subdomains', 'ischecked');
     unregister_setting('security_group', 'security_headers_hpkp_uri', 'isuri');
+    unregister_setting('security_group', 'security_headers_referrer', 'isreferrer');
 
 }
 register_deactivation_hook(__FILE__, 'security_headers_deactivate');
@@ -126,6 +146,7 @@ function security_headers_settings() {
     add_settings_field( 'field_HSTS_nosniff', 'Disable content sniffing', 'field_HSTS_nosniff_callback', 'security_headers', 'section_HEAD');
     add_settings_field( 'field_HSTS_xss', 'Enable Chrome XSS protection', 'field_HSTS_xss_callback', 'security_headers', 'section_HEAD');
     add_settings_field( 'field_HSTS_frame', 'Restrict framing of main site', 'field_HSTS_frame_callback', 'security_headers', 'section_HEAD');
+    add_settings_field( 'field_HSTS_referrer', 'HTTP Referrer Policy', 'field_HSTS_referrer_callback', 'security_headers', 'section_HEAD');
     add_settings_section('section_HSTS', 'HTTPS Strict Transport Security', 'section_HSTS_callback', 'security_headers');
     add_settings_field( 'field_HSTS_time', 'HSTS Time to live (seconds)', 'field_HSTS_time_callback', 'security_headers', 'section_HSTS');
     add_settings_field( 'field_HSTS_subdomain', 'HSTS to include subdomains', 'field_HSTS_subdomain_callback', 'security_headers', 'section_HSTS');
@@ -137,6 +158,7 @@ function security_headers_settings() {
     add_settings_field( 'field_HPKP_key2', 'HPKP backup key', 'field_HPKP_key2_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_key3', 'HPKP optional backup key', 'field_HPKP_key3_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_uri', 'HPKP Reporting URI', 'field_HPKP_uri_callback', 'security_headers', 'section_HPKP');
+   
 }
 add_action('admin_init', 'security_headers_activate');
 add_action('admin_menu', 'security_headers_settings');
@@ -146,6 +168,7 @@ function section_HEAD_callback() {
     echo '<p>Always disable <a href="https://blogs.msdn.microsoft.com/ie/2008/09/02/ie8-security-part-vi-beta-2-update/">Content sniffing</a>.</p>';
     echo '<p>XSS protection is enabled by default in IE and Chrome, but they try to clean up XSS requests; this setting ensures this behaviour is on in the browser even if the user disabled it, and that requests that trigger the warning are blocked and shown to the user, rather than silently mangled.</p>';
     echo '<p>Restrict framing prevent clickjacking in the main site, WordPress already sets this restriction for the admin and login pages.</p>';
+    echo '<p>Referrer Policy restricts what is included in referer header of requests created by following links in the page.</p>';
 }
 
 function section_HSTS_callback() {
@@ -194,6 +217,16 @@ function field_HSTS_frame_callback() {
     echo "<input type='checkbox' name='security_headers_frame' value='1' ";
     checked($setting, "1");
     echo " />";
+}
+    
+function field_HSTS_referrer_callback() {
+    global $referrer_policies;
+    $setting = esc_attr(get_option('security_headers_referrer'));
+    echo "<select name='security_headers_referrer'>";
+    foreach ($referrer_policies as $policy => $description){
+        echo '<option value="'.$policy.'"'.selected($setting,$policy).'>'.$policy.':'.$description.'</option>';
+    }
+    echo "</select>";
 }
 
 function section_HPKP_callback() {
@@ -267,4 +300,13 @@ function isuri($input) {
      $result=$input;
     }
     return $result ;
+}
+    
+function isreferrer($input) {
+    global $referrer_policies;
+    $result="";
+    if (array_key_exists($input,$referrer_policies)) {
+        $result=$input;
+    }
+    return $result;
 }
