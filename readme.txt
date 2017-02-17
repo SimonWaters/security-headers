@@ -43,7 +43,11 @@ Clickjacking protection is usually only relevant when someone is logged in but u
 
 = 0.9 =
 
-Removed unnecessary whitespace in HSTS header
+Removed unnecessary whitespace in HSTS header (thanks Thomas)
+
+Added Referrer-Policy header
+
+Corrected plugins name from "HTTP Headers" to "Security Header" (thanks Jamie)
 
 = 0.8 =
 
