@@ -46,7 +46,7 @@ function security_headers_insert() {
     // XSS
     $xss = esc_attr(get_option('security_headers_xss'));
     if ($xss == 1) {
-        header("X-XSS-Protection: 1; mode=block;");
+        header("X-XSS-Protection: 1; mode=block");
     }
 
     // Frame Options

@@ -49,6 +49,8 @@ Added Referrer-Policy header
 
 Corrected plugins name from "HTTP Headers" to "Security Header" (thanks Jamie)
 
+Removed trailing semi-colon from X-XSS-Protection (it worked but not needed)
+
 = 0.8 =
 
 Add headers to admin section of WordPress
