@@ -3,7 +3,7 @@
  * Plugin Name: Security Headers
  * Plugin URI: http://surevine.com/
  * Description: Sets security related headers (HSTS etc)
- * Version: 0.9
+ * Version: 1.0
  * Author: Simon Waters (Surevine Ltd)
  * Author URI: http://waters.me/
  * License: GPL2 or any later version
@@ -81,6 +81,19 @@ function security_headers_insert() {
     if (!empty($referrer)){
         header("Referrer-Policy: $referrer");
     }
+
+    // Expect-CT
+    if (is_ssl()){ // Should not be issued for http
+      $ectage = esc_attr(get_option('security_headers_ect_time'));
+      $ectenforce = esc_attr(get_option('security_headers_ect_enforce'));
+      $ecturi = get_option('security_headers_ect_uri');
+      if ( ctype_digit($ectage) ){
+        $ectheader="Expect-CT: max-age=$ectage";
+        if ($ectenforce > 0) { $ectheader .= ',enforce'; } 
+        if (!empty($ecturi)) { $ectheader .= ',report-uri="'. $ecturi .'"'; }
+        header($ectheader);
+      }
+    }
     
 
 }
@@ -105,6 +118,9 @@ function security_headers_activate() {
     register_setting('security_group', 'security_headers_hpkp_subdomains', 'ischecked');
     register_setting('security_group', 'security_headers_hpkp_uri', 'isuri');
     register_setting('security_group', 'security_headers_referrer', 'isreferrer');
+    register_setting('security_group', 'security_headers_ect_time', 'istime');
+    register_setting('security_group', 'security_headers_ect_enforce', 'ischecked');
+    register_setting('security_group', 'security_headers_ect_uri', 'isuri');
 }
 
 register_activation_hook(__FILE__, 'security_headers_activate');
@@ -128,6 +144,9 @@ function security_headers_deactivate() {
     unregister_setting('security_group', 'security_headers_hpkp_subdomains', 'ischecked');
     unregister_setting('security_group', 'security_headers_hpkp_uri', 'isuri');
     unregister_setting('security_group', 'security_headers_referrer', 'isreferrer');
+    unregister_setting('security_group', 'security_headers_ect_time', 'istime');
+    unregister_setting('security_group', 'security_headers_ect_enforce', 'ischecked');
+    unregister_setting('security_group', 'security_headers_ect_uri', 'isuri');
 
 }
 register_deactivation_hook(__FILE__, 'security_headers_deactivate');
@@ -145,15 +164,18 @@ function security_headers_display_form() {
 
 function security_headers_settings() {
     add_options_page('HTTP Headers', 'HTTP Headers', 'manage_options', 'security_headers', 'security_headers_display_form');
+
     add_settings_section('section_HEAD', 'General Security Headers', 'section_HEAD_callback', 'security_headers');
     add_settings_field( 'field_HSTS_nosniff', 'Disable content sniffing', 'field_HSTS_nosniff_callback', 'security_headers', 'section_HEAD');
     add_settings_field( 'field_HSTS_xss', 'Enable Chrome XSS protection', 'field_HSTS_xss_callback', 'security_headers', 'section_HEAD');
     add_settings_field( 'field_HSTS_frame', 'Restrict framing of main site', 'field_HSTS_frame_callback', 'security_headers', 'section_HEAD');
     add_settings_field( 'field_HSTS_referrer', 'HTTP Referrer Policy', 'field_HSTS_referrer_callback', 'security_headers', 'section_HEAD');
+
     add_settings_section('section_HSTS', 'HTTPS Strict Transport Security', 'section_HSTS_callback', 'security_headers');
     add_settings_field( 'field_HSTS_time', 'HSTS Time to live (seconds)', 'field_HSTS_time_callback', 'security_headers', 'section_HSTS');
     add_settings_field( 'field_HSTS_subdomain', 'HSTS to include subdomains', 'field_HSTS_subdomain_callback', 'security_headers', 'section_HSTS');
     add_settings_field( 'field_HSTS_preload', 'HSTS include site in preload list', 'field_HSTS_preload_callback', 'security_headers', 'section_HSTS');
+
     add_settings_section('section_HPKP', 'HTTP Public Key Pinning', 'section_HPKP_callback', 'security_headers');
     add_settings_field( 'field_HPKP_time', 'HPKP Time to live (seconds)', 'field_HPKP_time_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_subdomain', 'HPKP to include subdomains', 'field_HPKP_subdomain_callback', 'security_headers', 'section_HPKP');
@@ -161,6 +183,11 @@ function security_headers_settings() {
     add_settings_field( 'field_HPKP_key2', 'HPKP backup key', 'field_HPKP_key2_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_key3', 'HPKP optional backup key', 'field_HPKP_key3_callback', 'security_headers', 'section_HPKP');
     add_settings_field( 'field_HPKP_uri', 'HPKP Reporting URI', 'field_HPKP_uri_callback', 'security_headers', 'section_HPKP');
+
+    add_settings_section('section_ECT', 'Expect Certificate Transparency', 'section_ECT_callback', 'security_headers');
+    add_settings_field( 'field_ECT_time', 'Expect-CT max-age (seconds)', 'field_ECT_time_callback', 'security_headers', 'section_ECT');
+    add_settings_field( 'field_ECT_enforce', 'Expect-CT Enforcement', 'field_ECT_enforce_callback', 'security_headers', 'section_ECT');
+    add_settings_field( 'field_ECT_uri', 'Expect-CT Reporting URI', 'field_ECT_uri_callback', 'security_headers', 'section_ECT');
    
 }
 add_action('admin_init', 'security_headers_activate');
@@ -269,6 +296,29 @@ function field_HPKP_uri_callback() {
     $setting = esc_attr(get_option('security_headers_hpkp_uri'));
     echo "<input type='text' name='security_headers_hpkp_uri' value='$setting' />";
 }
+
+function section_ECT_callback() {
+    echo '<p>The Expect-CT header is a temporary measure to allow users to ensure their site is correctly configured for Certificate Transparency which Chrome will enforce from April 2018.</p>';
+    echo '<p>See <a href="https://scotthelme.co.uk/a-new-security-header-expect-ct/">Scott Helme\'s blog for more details.</p>';
+}
+
+function field_ECT_time_callback() {
+    $setting = esc_attr(get_option('security_headers_ect_time'));
+    echo "<input type='text' name='security_headers_ect_time' value='$setting' />";
+}
+
+function field_ECT_enforce_callback() {
+    $setting = esc_attr(get_option('security_headers_ect_enforce'));
+    echo "<input type='checkbox' name='security_headers_ect_enforce' value='1' ";
+    checked($setting, "1");
+    echo " />";
+}
+
+function field_ECT_uri_callback() {
+    $setting = esc_attr(get_option('security_headers_ect_uri'));
+    echo "<input type='text' name='security_headers_ect_uri' value='$setting' />";
+}
+
 
 function ischecked($input) {
     $result = "0";

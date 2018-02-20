@@ -21,6 +21,7 @@ This plug-in exposes controls for:
 * Disabling content sniffing (X-Content-Type-Options)
 * XSS protection (X-XSS-Protection)
 * Clickjacking mitigation (X-Frame-Options in main site)
+* Expect-CT
 
 HSTS is used to ensure that future connections to a website always use TLS, and disallowing bypass of certificate warnings for the site.
 
@@ -32,6 +33,8 @@ XSS protection re-enables XSS protection for the site, if the user has disabled 
 
 Clickjacking protection is usually only relevant when someone is logged in but users requested it, presumably they have rich content outside of WordPress authentication they wish to protect.
 
+Expect-CT is used to ensure Certificate Transparency is configured correctly.
+
 == Installation ==
 1. Upload "security_headers.php" to the "/wp-content/plugins/" directory.
 2. Activate the plugin through the "Plugins" menu in WordPress.
@@ -40,7 +43,9 @@ Clickjacking protection is usually only relevant when someone is logged in but u
 
 = 1.0 =
 
-Add action for wp-login.php page
+Add support for wp-login.php page
+
+Add support for Expect-CT header
 
 = 0.9 =
 
