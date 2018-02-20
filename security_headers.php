@@ -88,6 +88,8 @@ add_action('send_headers', 'security_headers_insert');
 // admin section doesn't have a send_headers action so we abuse init
 // https://codex.wordpress.org/Plugin_API/Action_Reference
 add_action('admin_init', 'security_headers_insert');
+// wp-login.php doesn't have a send_headers action so we abuse init
+add_action('login_init', 'security_headers_insert');
 
 function security_headers_activate() {
     register_setting('security_group', 'security_headers_hsts_time', 'istime');
@@ -111,6 +113,7 @@ function security_headers_deactivate() {
     remove_action('admin_menu', 'security_headers_settings');
     remove_action('send_headers', 'security_headers');
     remove_action('admin_init', 'security_headers');
+    remove_action('login_init', 'security_headers');
 
     unregister_setting('security_group', 'security_headers_hsts_time', 'istime');
     unregister_setting('security_group', 'security_headers_hsts_subdomains', 'ischecked');
